@@ -1,0 +1,27 @@
+# dsh-audio-cue —— bundle patch（挂载声明）
+#
+# 安装：dsh plugin --profile web add link:<...>/plugins/dsh-audio-cue
+#   ⚠️ 0.1.7-rc.2 与 0.2.0-rc.2 要加 --config.store-dir（值取该 profile 的 .modules.yaml 里 storeDir）；
+#      0.1.5-rc.3 不要加。
+# 停用：给下面的条目加 disabled: true（或把 config.enabled 置 false），重启 dsh-web。
+# 回滚：dsh plugin --profile web remove dsh-audio-cue
+#
+# 事件面（v0.1.3，全部经 2026-10-02 实测）：
+#   approval/request   （waterfall，**已放行 next()**）—— 审批音
+#   session/event      （emit，turn/end）—— 回合结束主路径（可过滤子代理）
+#   agent/turn-stopping（serial，无 scope 过滤）—— 回合结束兜底（延迟 2 s，主路径活着就不响）
+#   tools/execute      （waterfall，**已放行 next()**）—— 提问音
+# 本插件不注册工具、不注册服务、不碰任何现有文件；卸载即完全恢复。
+- insert:
+    - id: dsh-audio-cue
+      name: dsh-audio-cue
+      config:
+        enabled: true                # 总开关
+        approval: true               # 审批询问响
+        ask: true                    # 提问（ask_user_question）响，与审批同一声
+        turnEnd: true                # 一轮对话结束响
+        ignoreSubagents: true        # 子代理会话的回合结束不响
+        fallbackTurnStopping: true    # 兜底路径：session/event 送不到时用 agent/turn-stopping 补一声
+        fallbackDelayMs: 2000        # 兜底延迟（毫秒）
+        selfTest: false              # 自检音：仅在排查「宿主能不能出声」时临时开
+        selfTestMs: 2500             # 自检音延迟（毫秒）
